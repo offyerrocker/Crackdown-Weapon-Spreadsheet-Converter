@@ -1,0 +1,20 @@
+{
+	"name" : "Crackdown Weapon Spreadsheet Converter",
+	"description" : "See converter_script.lua for instructions.",
+	"author" : "Offyerrocker",
+	"contact" : "Discord: Offyerrocker#3878",
+	"version" : "1.1",
+	"blt_version" : 2,
+	"color" : "255 0 0",
+	"keybinds" : [
+		{
+			"keybind_id" : "hi_kith_offy_waz_heer",
+			"name" : "Run converter script",
+			"description" : "Converts weapon data pasted from the spreadsheet",
+			"script_path" : "converter_script.lua",
+			"run_in_menu" : true,
+			"run_in_game" : false,
+			"localized" : false
+		}
+	]
+}
