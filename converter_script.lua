@@ -604,8 +604,10 @@ if input_file then
 									result.stats[valid_keys[key]] = val
 								elseif key == "Fire Rate" then 
 									result.fire_mode_data.fire_rate = convert_rof(val)
-								elseif key == "Pickup (low)" or key == "Pickup (high)" then 
-									result.AMMO_PICKUP[valid_keys[key]] = val
+								elseif key == "Pickup (low)" then 
+									result.AMMO_PICKUP[1] = val
+								elseif key == "Pickup (high)" then 
+									result.AMMO_PICKUP[2] = val
 								else 
 									if BREAK_ON_UNSUPPORTED_STAT then 
 										olog("Error! Unsupported stat: \"" .. tostring(key) .. "\" in \"" .. line .. "\"")
