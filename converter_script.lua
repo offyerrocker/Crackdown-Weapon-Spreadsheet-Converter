@@ -109,8 +109,8 @@ local weapon_data_template = {
 	subclasses = {},
 	fire_mode_data = {},
 	AMMO_PICKUP = {
-		pickup_low = 69,
-		pickup_high = 69
+		1,
+		2
 	},
 	stats = {
 		damage = 69,
@@ -121,12 +121,12 @@ local weapon_data_template = {
 --the stats below aren't defined in the expected formatted input from the doc; you will need to change these manually.
 --(I recommend doing that BEFORE you start processing weapons.)
 		spread_moving = 1,
-		alert_size = 1,
-		value = 1,
-		extra_ammo = 1,
+		value = 1, --cost?
+		extra_ammo = 51, --don't worry about this
+		total_ammo_mod = 21, --or this
+		alert_size = 7,
 		zoom = 1,
-		total_ammo_mod = 1,
-		reload = 1
+		reload = 11 --doesn't affect anything
 	},
 --[[ you can uncomment any of these (remove them from the block-commented section) in order to enable generating them with default values. also uncomment them if you plan to convert them through input
 	single = {
@@ -655,12 +655,12 @@ if input_file then
 			local datatype = type(data)
 			if datatype ~= "table" then 
 				if datatype == "string" then 
-					output(weapon_prefix .. " = \"" .. data .. "\"")
+					output(string.rep("\t",TAB_OFFSETS) .. weapon_prefix .. " = \"" .. data .. "\"")
 				else
-					output(weapon_prefix .. " = " .. tostring(data))
+					output(string.rep("\t",TAB_OFFSETS) .. weapon_prefix .. " = " .. tostring(data))
 				end
 			elseif not table.empty(data) then 
-				output(weapon_prefix .. " = {")
+				output(string.rep("\t",TAB_OFFSETS) .. weapon_prefix .. " = {")
 				local tbl_len = sort_tbl(data)
 				local i = 0
 				local ordered = true
@@ -679,17 +679,17 @@ if input_file then
 						prefix = _key .. " = " 
 					end
 					if i >= #tbl_len then 
-						OutputTable(_data,TAB_OFFSETS,prefix,true)
+						OutputTable(_data,TAB_OFFSETS + 1,prefix,true)
 					else
-						OutputTable(_data,TAB_OFFSETS,prefix)
+						OutputTable(_data,TAB_OFFSETS + 1,prefix)
 					end
 				end
-				output("}")
+				output(string.rep("\t",TAB_OFFSETS) .. "}")
 			end
 		end
 		
 		for _,filler_line in pairs(filler_weapon_data_template) do 
-			output(string.gsub(filler_line,"WEAPONPREFIX",td_prefix .. tostring(weapon_id)))
+			output(string.rep("\t",TAB_OFFSETS) .. string.gsub(filler_line,"WEAPONPREFIX",td_prefix .. tostring(weapon_id)))
 		end
 		
 		
