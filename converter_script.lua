@@ -689,7 +689,8 @@ if input_file then
 		end
 		
 		for _,filler_line in pairs(filler_weapon_data_template) do 
-			output(string.rep("\t",TAB_OFFSETS) .. string.gsub(filler_line,"WEAPONPREFIX",td_prefix .. tostring(weapon_id)))
+			local s = string.rep("\t",TAB_OFFSETS) .. string.gsub(filler_line,"\n","\n" .. string.rep("\t",TAB_OFFSETS))
+			output(string.gsub(s,"WEAPONPREFIX",td_prefix .. tostring(weapon_id)))
 		end
 		
 		
