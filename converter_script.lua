@@ -82,13 +82,19 @@ local TAB_OFFSETS = 2
 --Set to 0 or below to disable entirely.
 local NEWLINE_OFFSETS = 2
 
+
+--If true,
+--	writes the table for spread (standing, crouching, steelsight, move/stand,move/crouch,move/steelsight) 
+--	and the table for kick (standing, crouching, steelsight).
+local WRITE_FILLER_TABLES = true
+
 --If true, writes the name of the weapon at the top of the weapon data block
 -- in a Lua comment (like this one!) which will be saved and legible in the document by human eyes, but ignored by the compiler.
 --This also uses your game's localization, so it'll be in your game's language. 
 -- Also, make sure you don't have any mods that change weapon names.
 --I mean, unless you WANT everyone to know you renamed the Blaster 9mm to the AssBlaster 69mm.
 --Hey, I ain't judging.
-local WRITE_WEAPON_NAME_COMMENT = true
+local WRITE_WEAPON_NAME_COMMENT = false
 
 --If true, cancels conversion and writes a message to the SBLT Console upon encountering any unexpected/unknown stat from input
 local BREAK_ON_UNSUPPORTED_STAT = false
@@ -513,6 +519,10 @@ local function convert_accstab(stat) --converts acc/stab from a [0-100] value to
 	return (stat + 4) / 4
 end
 
+local function convert_threat(input)
+	return input / 2
+end
+
 local function convert_boolean(input)
 	if type(input) == "string" then 
 		local s = string.lower(input)
@@ -593,7 +603,7 @@ if input_file then
 									result.stats[valid_keys[key]] = convert_accstab(val)
 								elseif key == "Magazine" or key == "Ammo Stock" then
 									result[valid_keys[key]] = val
-								elseif key == "Concealment" or key == "Threat" then 
+								elseif key == "Concealment" then 
 									result.stats[valid_keys[key]] = val
 								elseif key == "Damage" then
 									if val > 200 then 
@@ -602,6 +612,8 @@ if input_file then
 										val = 200
 									end
 									result.stats[valid_keys[key]] = val
+								elseif key == "Threat" then 
+									result.stats[valid_keys[key]] = convert_threat(val)
 								elseif key == "Fire Rate" then 
 									result.fire_mode_data.fire_rate = convert_rof(val)
 								elseif key == "Pickup (low)" then 
@@ -688,9 +700,11 @@ if input_file then
 			end
 		end
 		
-		for _,filler_line in pairs(filler_weapon_data_template) do 
-			local s = string.rep("\t",TAB_OFFSETS) .. string.gsub(filler_line,"\n","\n" .. string.rep("\t",TAB_OFFSETS))
-			output(string.gsub(s,"WEAPONPREFIX",td_prefix .. tostring(weapon_id)))
+		if WRITE_FILLER_TABLES then 
+			for _,filler_line in pairs(filler_weapon_data_template) do 
+				local s = string.rep("\t",TAB_OFFSETS) .. string.gsub(filler_line,"\n","\n" .. string.rep("\t",TAB_OFFSETS))
+				output(string.gsub(s,"WEAPONPREFIX",td_prefix .. tostring(weapon_id)))
+			end
 		end
 		
 		
