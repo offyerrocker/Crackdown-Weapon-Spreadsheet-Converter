@@ -199,143 +199,83 @@ WEAPONPREFIX.kick = {
 
 --[[EXAMPLE INPUT DATA (extra spaces or empty newlines are okay; multiple weapons at a time are also okay, as shown)
 
-ID: x_tec9
-Accuracy: 52
-Class: Rapid Fire
-Stability: 100
-Magazine: 40
-Concealment: 30
-Ammo Stock: 320
-Threat: 10
-Fire Rate: 896
-Pickup (low): 8
-Damage: 50
-Pickup (high): 16
-
-ID: sub2000
+ID: m95
 Accuracy: 100
-Class: Precision
-Stability: 12
-Magazine: 33
-Concealment: 30
-Ammo Stock: 66
-Threat: 10
-Fire Rate: 706
-Pickup (low): 3
-Damage: 160
-Pickup (high): 4
+Class: Heavy
+Stability: 0
+Magazine: 5
+Concealment: 0
+Ammo Stock: 20
+Threat: 43
+Fire Rate: 40
+Pickup (low): 0.25
+Damage: 3500
+Pickup (high): 0.5
 
+Properties: Armor Piercing, Body Piercing, Shield Piercing
 
 --]]
---[[
-				--Akimbo Blaster 9mm Submachine Guns--
-self.x_tec9.CLIP_AMMO_MAX = 40
-self.x_tec9.fire_mode_data = {
-		fire_rate = 0.066964285714286
-}
-self.x_tec9.stats = {
-		concealment = 30,
-		suppression = 10,
-		reload = 1,
-		extra_ammo = 1,
-		spread = 14,
-		spread_moving = 1,
-		recoil = 26,
-		value = 1,
-		alert_size = 1,
-		damage = 50,
-		total_ammo_mod = 1,
-		zoom = 1
-}
-self.x_tec9.AMMO_MAX = 320
-self.x_tec9.primary_class = "rapidfire"
-self.x_tec9.AMMO_PICKUP = {
-		pickup_high = 16,
-		pickup_low = 8
-}
-self.x_tec9.spread = {
-	standing = self.new_m4.spread.standing,
-	crouching = self.new_m4.spread.crouching,
-	steelsight = self.new_m4.spread.steelsight,
-	moving_standing = self.new_m4.spread.moving_standing,
-	moving_crouching = self.new_m4.spread.moving_crouching,
-	moving_steelsight = self.new_m4.spread.moving_steelsight
-}
-self.x_tec9.kick = {
-	standing = {
-		3,
-		4.8,
-		-0.3,
-		0.3
-	},
-	crouching = {
-		3,
-		4.8,
-		-0.3,
-		0.3
-	},
-	steelsight = {
-		3,
-		4.8,
-		-0.3,
-		0.3
-	}
-}
+--[[ EXAMPLE OUTPUT DATA (ready for copypasting)
 
-
-				--Cavity 9mm--
-self.sub2000.CLIP_AMMO_MAX = 33
-self.sub2000.fire_mode_data = {
-		fire_rate = 0.084985835694051
-}
-self.sub2000.stats = {
-		concealment = 30,
-		suppression = 10,
-		reload = 1,
-		extra_ammo = 1,
-		spread = 26,
-		spread_moving = 1,
-		recoil = 4,
-		value = 1,
-		alert_size = 1,
-		damage = 160,
-		total_ammo_mod = 1,
-		zoom = 1
-}
-self.sub2000.AMMO_MAX = 66
-self.sub2000.primary_class = "precision"
-self.sub2000.AMMO_PICKUP = {
-		pickup_high = 4,
-		pickup_low = 3
-}
-self.sub2000.spread = {
-	standing = self.new_m4.spread.standing,
-	crouching = self.new_m4.spread.crouching,
-	steelsight = self.new_m4.spread.steelsight,
-	moving_standing = self.new_m4.spread.moving_standing,
-	moving_crouching = self.new_m4.spread.moving_crouching,
-	moving_steelsight = self.new_m4.spread.moving_steelsight
-}
-self.sub2000.kick = {
-	standing = {
-		3,
-		4.8,
-		-0.3,
-		0.3
-	},
-	crouching = {
-		3,
-		4.8,
-		-0.3,
-		0.3
-	},
-	steelsight = {
-		3,
-		4.8,
-		-0.3,
-		0.3
-	}
-}
+		self.m95.CLIP_AMMO_MAX = 5
+		self.m95.fire_mode_data = {
+			fire_rate = 1.5
+		}
+		self.m95.stats_modifiers = {
+			damage = 17.5
+		}
+		self.m95.can_shoot_through_shield = true
+		self.m95.stats = {
+			concealment = 0,
+			suppression = 21.5,
+			reload = 11,
+			extra_ammo = 51,
+			spread_moving = 1,
+			spread = 26,
+			recoil = 1,
+			value = 1,
+			alert_size = 7,
+			damage = 200,
+			total_ammo_mod = 21,
+			zoom = 1
+		}
+		self.m95.armor_piercing_chance = 1
+		self.m95.can_shoot_through_enemy = true
+		self.m95.can_shoot_through_wall = true
+		self.m95.AMMO_PICKUP = {
+			0.25,
+			0.5
+		}
+		self.m95.primary_class = "heavy"
+		self.m95.AMMO_MAX = 20
+		self.m95.spread = {
+			standing = self.new_m4.spread.standing,
+			crouching = self.new_m4.spread.crouching,
+			steelsight = self.new_m4.spread.steelsight,
+			moving_standing = self.new_m4.spread.moving_standing,
+			moving_crouching = self.new_m4.spread.moving_crouching,
+			moving_steelsight = self.new_m4.spread.moving_steelsight
+		}
+		self.m95.kick = {
+			standing = {
+				3,
+				4.8,
+				-0.3,
+				0.3
+			},
+			crouching = {
+				3,
+				4.8,
+				-0.3,
+				0.3
+			},
+			steelsight = {
+				3,
+				4.8,
+				-0.3,
+				0.3
+			}
+		}
 
 
 
@@ -379,9 +319,11 @@ local valid_keys = {
 --the below are functional but never used, so they won't generate unless you add them to the weapon_data_template table
 	["Can Toggle Firemode"] = "CAN_TOGGLE_FIREMODE", --boolean value!
 	["Fire Mode"] = "FIRE_MODE",
-	["Shield Piercing"] = "can_shoot_through_shield",
-	["Enemy Piercing"] = "can_shoot_through_enemy",
-	["Wall Piercing"] = "can_shoot_through_wall"
+	["Armor Piercing"] = "armor_piercing_chance", --num [0-1]
+	["Shield Piercing"] = "can_shoot_through_shield", --boolean flag
+	["Body Piercing"] = "can_shoot_through_enemy", --boolean flag
+	["Wall Piercing"] = "can_shoot_through_wall", --boolean flag (not really used)
+	["Properties"] = "properties" --placeholder/reference; should not be used
 --the below stat values aren't used and may not be fully functional
 --since this script is deliberately designed to convert values copypasted from the doc,
 --the script only explicitly supports stats that are listed on the doc.
@@ -565,7 +507,7 @@ if input_file then
 								all_results[weapon_id] = {result = result,found_unstable_fields = found_unstable_fields}
 								found_unstable_fields = {}
 							end
-						elseif key == "Class" then  --this is currently the only non-number value supported aside from weapon_id and FIRE_MODE
+						elseif key == "Class" then --string
 							local function add_weapon_class(_classname)
 								local classname = remove_extra_spaces(_classname)
 								if classes[classname] then 
@@ -586,15 +528,27 @@ if input_file then
 							else
 								add_weapon_class(val)
 							end
-						elseif key == "Fire Mode" then
+						elseif key == "Fire Mode" then --string
 							result[valid_keys[key]] = val
+						elseif key == "Properties" then -- various (formatted in one line in the document)
+							local properties = string.split(val,",")
+							for _,_property in pairs(properties) do 
+								local property = remove_extra_spaces(_property)
+								if property == "Armor Piercing" then
+									result[valid_keys[property]] = 1
+								elseif property == "Body Piercing" then 
+									result[valid_keys[property]] = true
+								elseif property == "Wall Piercing" or property == "Shield Piercing" then  --shield and wall piercing are the same in the overhaul
+									result.can_shoot_through_wall = true
+									result.can_shoot_through_shield = true
+								else
+									olog("Error: Unknown property " .. tostring(property))
+									if BREAK_ON_UNSUPPORTED_STAT then 
+										return
+									end
+								end
+							end
 						elseif key == "Can Toggle Firemode" then --bool
-							result[valid_keys[key]] = convert_boolean(val)
-						elseif key == "Shield Piercing" then --bool
-							result[valid_keys[key]] = convert_boolean(val)
-						elseif key == "Enemy Piercing" then --bool; aka overpenetration
-							result[valid_keys[key]] = convert_boolean(val)
-						elseif key == "Wall Piercing" then --bool
 							result[valid_keys[key]] = convert_boolean(val)
 						else
 							val = tonumber(val)
