@@ -458,11 +458,11 @@ local function convert_rof(rpm) --converts rounds per minute to seconds per roun
 end
 
 local function convert_accstab(stat) --converts acc/stab from a [0-100] value to the weird internal multiple of 4 stat thing pd2 has going on
-	return (stat + 4) / 4
+	return math.round((stat + 4) / 4)
 end
 
 local function convert_threat(input)
-	return input / 2
+	return math.round(input / 2)
 end
 
 local function convert_boolean(input)
