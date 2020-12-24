@@ -311,6 +311,7 @@ local valid_keys = {
 	["Magazine"] = "CLIP_AMMO_MAX",
 	["Concealment"] = "concealment", --stats table
 	["Ammo Stock"] = "AMMO_MAX",
+	["Total Ammo"] = "AMMO_MAX",
 	["Threat"] = "suppression", --stats table
 	["Fire Rate"] = "fire_rate", --firemode-dependent table/fire_mode_data table
 	["Pickup (low)"] = "pickup_low", --AMMO_PICKUP table
