@@ -1,11 +1,10 @@
---(Un)Official Crackdown Weapon Converter Tool v1.1
+--(Un)Official Crackdown Weapon Converter Tool v2.0
 --	For help/reporting bugs/etc, contact me on Discord.
 
 --todo: 
 --	organize fields so that they're in a set order?
 --	search option to find weapons or attachments by their localized names?
 --	attachment conversion tool?
---	melee conversion tool?
 
 -------------------------------------
 --        ABOUT THIS SCRIPT        --
@@ -39,6 +38,7 @@
 -------------------------------------
 --       USAGE INSTRUCTIONS:       --
 -------------------------------------
+--0. Make sure the mode variable (below) is set to "melee" or "weapon", according to if your data comes from a melee weapon or a main weapon (gun).
 --1. Open INPUT.txt (or whatever file you specify in the input_filepath option below)
 --2. Paste in one or more* formatted table data sets from one of Kith's Crackdown weapons spreadsheets; it should look like the example (scroll down, see: EXAMPLE INPUT DATA)
 -- *This converter script also supports pasting multiple stat blocks in at the same time, delimited by weapon_ids;
@@ -57,11 +57,16 @@
 --		so I recommend either doing batch processing (see Step 2 above) all at once and then copying out the results, or 
 --		just being extra-sure not to assume that the contents of the previous weapon will still be there when you run the script again.
 
-
+--Gimmick melee weapons will need to have their effects (and potentially stats, for some artifacts like dot_data) set/written manually,
+--but their stats can still be set here.
 
 ----------------------
 --     OPTIONS      --
 ----------------------
+
+--if "melee", then it is set to use the melee weapon stat keys;
+--else if "weapon", or else unspecified, then uses the normal gun stat keys
+local mode = "melee"
 
 --only used for the below two filepaths; change it accordingly if you intend to change the folder name
 --or if you just want to change the destination path
@@ -75,7 +80,8 @@ local output_filepath = mod_path .. "OUTPUT.txt"
 
 --All text output will have this many tabs prepended to it-
 --(as in "\t", the formatting character from pressing Tab)
-local TAB_OFFSETS = 2
+local TAB_OFFSETS = 1
+
 
 --The number of newlines (empty lines) between distinct weapon entries,
 --added to the bottom of every entry.
@@ -84,9 +90,27 @@ local NEWLINE_OFFSETS = 2
 
 
 --If true,
+-- writes each entry as a table instead of overwriting the entire table
+--eg. writes
+--		self.g32.stats.damage = 69
+--		stats.recoil = 32
+--instead of 
+--g32.stats = {
+--	damage = 69,
+--	recoil = 32
+--}
+local WRITE_INDIVIDUAL_TABLE_ENTRIES = true
+
+--If true,
+--	writes tables that are specified but don't have any data.
+--This is useful for inserting things that are intentionally empty (such as a subclasses table, if the weapon does not have any subclasses)
+--	but this can overwrite existing tables, so use with caution.
+local INCLUDE_EMPTY_TABLES = true
+
+--If true,
 --	writes the table for spread (standing, crouching, steelsight, move/stand,move/crouch,move/steelsight) 
 --	and the table for kick (standing, crouching, steelsight).
-local WRITE_FILLER_TABLES = true
+local WRITE_FILLER_TABLES = false
 
 --If true, writes the name of the weapon at the top of the weapon data block
 -- in a Lua comment (like this one!) which will be saved and legible in the document by human eyes, but ignored by the compiler.
@@ -94,7 +118,7 @@ local WRITE_FILLER_TABLES = true
 -- Also, make sure you don't have any mods that change weapon names.
 --I mean, unless you WANT everyone to know you renamed the Blaster 9mm to the AssBlaster 69mm.
 --Hey, I ain't judging.
-local WRITE_WEAPON_NAME_COMMENT = false
+local WRITE_WEAPON_NAME_COMMENT = true 
 
 --If true, cancels conversion and writes a message to the SBLT Console upon encountering any unexpected/unknown stat from input
 local BREAK_ON_UNSUPPORTED_STAT = false
@@ -110,7 +134,7 @@ local LOG_RESULT_TO_BLT = false
 --If true, also writes to the SBLT Console everything that it writes to the output file.
 
 --You can add default tweakdata values to this table; they'll be overwritten or used, depending on whether your input contains an entry for that field
-local weapon_data_template = {
+local gun_data_template = {
 	primary_class = nil,
 	subclasses = {},
 	fire_mode_data = {},
@@ -158,6 +182,82 @@ local weapon_data_template = {
 --stats_modifiers = {damage = 1}, --commented out because damage stat mult is done by this script automatically if damage exceeds 200, but you could add it if you wanted
 	
 --]]
+}
+local melee_data_template = {
+	primary_class = "class_melee",
+	subclasses = {},
+	stats = {
+		remove_weapon_movement_penalty = true,
+		min_damage = 3,
+		max_damage = 8,
+--		min_damage_effect = 1,
+--		max_damage_effect = 1,
+		charge_time = 2,
+		range = 185,
+		concealment = 30
+	},
+	--below three stats not yet implemented
+--	repeat_expire_t = 0.6,
+--	expire_t = 1.2,
+--	melee_damage_delay = 0.1,
+}
+--unchanged and therefore inherited from original; here for reference, and not used in the converter script
+
+--[[
+local unchanged_melee_data = {
+	type = "knife", --"knife", "axe", "flag", "fists"
+	name_id = "bm_melee_WEAPONID", --naming convention, so unreliable to generate; the id of the localized name
+	unit = "units/DLC_PATH/PATH_TO_WEAPON_UNIT",
+	third_unit = "units/DLC_PATH/PATH_TO_3P_WEAPON_UNIT",
+	animation = nil, 
+	hit_pre_calculation = true,
+	dlc = "bex",
+	texture_bundle_folder = "bex",
+	weapon_type = "sharp", --"blunt" or "sharp"
+	melee_charge_shaker = "player_melee_charge_wing",
+	align_objects = {
+		"a_weapon_right"
+	},
+	anims = {
+		var1_attack = {
+			anim = "var1"
+		},
+		var2_attack = {
+			anim = "var2"
+		},
+		charge = {
+			loop = false,
+			anim = "charge"
+		}
+	},
+	anim_global_param = "melee_knife",
+	anim_attack_vars = {
+		"var1",
+		"var2",
+		"var3",
+		"var4"
+	},
+	sounds = {
+		equip = "WEAPONID_equip",
+		hit_air = "WEAPONID_air",
+		hit_gen = "WEAPONID_gen",
+		hit_body = "WEAPONID_body",
+		charge = "WEAPONID_charge"
+	},
+	dot_data = {
+		type = "poison",
+		custom_data = {
+			dot_length = 3,
+			hurt_animation_chance = 0
+		}
+	}
+}
+]]
+
+local filler_melee_data_template = { --not used
+	[[
+	
+	]]
 }
 
 --These are other things that sure are generated which reference other table values in weapontweakdata,
@@ -284,7 +384,8 @@ Properties: Armor Piercing, Body Piercing, Shield Piercing
 
 ---------- You shouldn't NEED to change anything below here, but hey, mi casa es su casa, right?
 
-local td_prefix = "self." --"self" here represents "tweak_data.weapon"
+local weapon_td_prefix = "self." --"self" here represents "tweak_data.weapon"
+local melee_td_prefix = "self.melee_weapons." --"self" here represents "tweak_data.blackmarket"
 
 local classes = {
 	["Rapid Fire"] = "rapidfire",
@@ -317,7 +418,7 @@ local valid_keys = {
 	["Pickup (low)"] = "pickup_low", --AMMO_PICKUP table
 	["Pickup (high)"] = "pickup_high", --AMMO_PICKUP table
 	["Damage"] = "damage", -- stats table; require damage multiplier to stats_modifiers table if above 200
---the below are functional but never used, so they won't generate unless you add them to the weapon_data_template table
+--the below are functional but never used, so they won't generate unless you add them to the gun_data_template table
 	["Can Toggle Firemode"] = "CAN_TOGGLE_FIREMODE", --boolean value!
 	["Fire Mode"] = "FIRE_MODE",
 	["Armor Piercing"] = "armor_piercing_chance", --num [0-1]
@@ -444,11 +545,22 @@ local function remove_extra_spaces(s)
 end
 
 local function get_weapon_name(weapon_id)
-	if tweak_data and tweak_data.weapon and managers and managers.localization and managers.localization then 
-		 local td = tweak_data.weapon[weapon_id]
-		 if td then 
-			return managers.localization:text(td.name_id)
-		 end
+	if tweak_data and managers and managers.localization and managers.localization then 
+		if mode == "melee" then 
+			if tweak_data.blackmarket and tweak_data.blackmarket.melee_weapons then 
+				local td = tweak_data.blackmarket.melee_weapons[weapon_id]
+				if td then 
+					return managers.localization:text(td.name_id)
+				end
+			end
+		else
+			if tweak_data.weapon then 
+				local td = tweak_data.weapon[weapon_id]
+				if td then 
+					return managers.localization:text(td.name_id)
+				end
+			end
+		end
 	end
 	return tostring(weapon_id)
 end
@@ -482,133 +594,189 @@ local all_results = {} --used to hold all results, with an individual child tabl
 
 local input_file = io.open(input_filepath,"r")
 if input_file then 
-
-	local result = table.deep_map_copy(weapon_data_template)
+	local result 
 	local found_unstable_fields = {}
-
 	local weapon_id
-	
-	for raw_line in input_file:lines() do 
-		local line = remove_extra_spaces(raw_line)
-		if line ~= "" then 
-			local split = string.split(line,":")
-			if split and #split > 0 then 
+	local td_prefix
+	if mode == "melee" then 
+		td_prefix = melee_td_prefix
+		local line_num = 0
+		for raw_line in input_file:lines() do 
+			line_num = line_num + 1
+			local line = remove_extra_spaces(raw_line) 
+			if line ~= "" then 
+				local split = string.split(line,":")
 				if not (split[1] and split[2]) then 
-					olog("Error! Invalid formatting in line #" .. (line_num or "nil") .. ": \"" .. line .. "\"")
+					olog("Error! Invalid formatting in line#" .. (line_num or "nil") .. ": \"" .. line .. "\"")
 				else
-					local key = split[1]
-					key = remove_extra_spaces(key)
-					local val = split[2]
-					val = remove_extra_spaces(val)
-					if valid_keys[key] then 
-						if key == "ID" then 
-							weapon_id = remove_extra_spaces(val)
-							if weapon_id then 
-								result = table.deep_map_copy(weapon_data_template)
-								all_results[weapon_id] = {result = result,found_unstable_fields = found_unstable_fields}
-								found_unstable_fields = {}
+					local key = remove_extra_spaces(split[1])
+					local val = remove_extra_spaces(split[2])
+					if key == "ID" then
+						weapon_id = remove_extra_spaces(val)
+						if weapon_id then 
+							result = table.deep_map_copy(melee_data_template)
+							all_results[weapon_id] = {result = result,found_unstable_fields = found_unstable_fields}
+							found_unstable_fields = {}
+						end
+					elseif weapon_id then 
+						if val == "nil" then 
+						else
+							val = tonumber(val)
+						end
+						if key == "Damage" then 
+							result.stats.min_damage = val / 10
+						elseif key == "Charged Damage" then 
+							result.stats.max_damage = val / 10
+						elseif key == "Charge Time" then 
+							result.stats.charge_time = val
+						elseif key == "Knockback" then 
+							result.stats.knockback_tier = val --used in cd only
+--							result.stats.min_damage_effect = val / 10
+--							result.stats.max_damage_effect = val / 10
+						elseif key == "Range" then 
+							result.stats.range = val
+						elseif key == "Concealment" then 
+							result.stats.concealment = val
+							
+							--not implemented yet
+						elseif key == "Repeat Delay" then 
+							result.repeat_expire_t = val
+						elseif key == "Damage Delay" then 
+							result.melee_damage_delay = val
+						elseif key == "Expire Time" then 
+							result.expire_t = val
+						else
+							olog("Error! Unable to parse stat value \"" .. tostring(split[2]) .. "\" in \"" .. line .. "\"!")
+							if BREAK_ON_ERROR then 
+								return
 							end
-						elseif key == "Class" then --string
-							local function add_weapon_class(_classname)
-								local classname = remove_extra_spaces(_classname)
-								if classes[classname] then 
-									result.primary_class = classes[classname]
-								elseif subclasses[classname] then 
-									table.insert(result.subclasses,subclasses[classname])
+						end
+						
+					end
+				end
+			end
+		end
+	else
+		td_prefix = weapon_td_prefix
+		result = table.deep_map_copy(gun_data_template)
+		for raw_line in input_file:lines() do 
+			local line = remove_extra_spaces(raw_line)
+			if line ~= "" then 
+				local split = string.split(line,":")
+				if split and #split > 0 then 
+					if not (split[1] and split[2]) then 
+						olog("Error! Invalid formatting in line #" .. (line_num or "nil") .. ": \"" .. line .. "\"")
+					else
+						local key = split[1]
+						key = remove_extra_spaces(key)
+						local val = split[2]
+						val = remove_extra_spaces(val)
+						if valid_keys[key] then 
+							if key == "ID" then 
+								weapon_id = remove_extra_spaces(val)
+								if weapon_id then 
+									result = table.deep_map_copy(gun_data_template)
+									all_results[weapon_id] = {result = result,found_unstable_fields = found_unstable_fields}
+									found_unstable_fields = {}
+								end
+							elseif key == "Class" then --string
+								local function add_weapon_class(_classname)
+									local classname = remove_extra_spaces(_classname)
+									if classes[classname] then 
+										result.primary_class = classes[classname]
+									elseif subclasses[classname] then 
+										table.insert(result.subclasses,subclasses[classname])
+									else
+										olog("Error! Unknown class name \"" .. tostring(classname) .. "\" in \"" .. line .. "\"!")
+										if BREAK_ON_ERROR then 
+											return
+										end
+									end
+								end
+								if string.find(val,",") then
+									for _,_classname in pairs(string.split(val,",") or {}) do 
+										add_weapon_class(_classname)
+									end
 								else
-									olog("Error! Unknown class name \"" .. tostring(classname) .. "\" in \"" .. line .. "\"!")
+									add_weapon_class(val)
+								end
+							elseif key == "Fire Mode" then --string
+								result[valid_keys[key]] = val
+							elseif key == "Properties" then -- various (formatted in one line in the document)
+								local properties = string.split(val,",")
+								for _,_property in pairs(properties) do 
+									local property = remove_extra_spaces(_property)
+									if property == "Armor Piercing" then
+										result[valid_keys[property]] = 1
+									elseif property == "Body Piercing" then 
+										result[valid_keys[property]] = true
+									elseif property == "Wall Piercing" or property == "Shield Piercing" then  --shield and wall piercing are the same in the overhaul
+										result.can_shoot_through_wall = true
+										result.can_shoot_through_shield = true
+									else
+										olog("Error: Unknown property " .. tostring(property))
+										if BREAK_ON_UNSUPPORTED_STAT then 
+											return
+										end
+									end
+								end
+							elseif key == "Can Toggle Firemode" then --bool
+								result[valid_keys[key]] = convert_boolean(val)
+							else
+								val = tonumber(val)
+								if val then 
+									if key == "Accuracy" or key == "Stability" then 
+										result.stats[valid_keys[key]] = convert_accstab(val)
+									elseif key == "Magazine" or key == "Ammo Stock" then
+										result[valid_keys[key]] = val
+									elseif key == "Concealment" then 
+										result.stats[valid_keys[key]] = val
+									elseif key == "Damage" then
+										if val > 200 then 
+											result.stats_modifiers = result.stats_modifiers or {}
+											result.stats_modifiers.damage = val / 200 
+											val = 200
+										end
+										result.stats[valid_keys[key]] = val
+									elseif key == "Threat" then 
+										result.stats[valid_keys[key]] = convert_threat(val)
+									elseif key == "Fire Rate" then 
+										result.fire_mode_data.fire_rate = convert_rof(val)
+									elseif key == "Pickup (low)" then 
+										result.AMMO_PICKUP[1] = val
+									elseif key == "Pickup (high)" then 
+										result.AMMO_PICKUP[2] = val
+									else 
+										if BREAK_ON_UNSUPPORTED_STAT then 
+											olog("Error! Unsupported stat: \"" .. tostring(key) .. "\" in \"" .. line .. "\"")
+											return
+										end
+										table.insert(found_unstable_fields,key)
+									end
+								else
+									olog("Error! Unable to parse stat value \"" .. tostring(split[2]) .. "\" in \"" .. line .. "\"!")
 									if BREAK_ON_ERROR then 
 										return
 									end
 								end
 							end
-							if string.find(val,",") then
-								for _,_classname in pairs(string.split(val,",") or {}) do 
-									add_weapon_class(_classname)
-								end
-							else
-								add_weapon_class(val)
-							end
-						elseif key == "Fire Mode" then --string
-							result[valid_keys[key]] = val
-						elseif key == "Properties" then -- various (formatted in one line in the document)
-							local properties = string.split(val,",")
-							for _,_property in pairs(properties) do 
-								local property = remove_extra_spaces(_property)
-								if property == "Armor Piercing" then
-									result[valid_keys[property]] = 1
-								elseif property == "Body Piercing" then 
-									result[valid_keys[property]] = true
-								elseif property == "Wall Piercing" or property == "Shield Piercing" then  --shield and wall piercing are the same in the overhaul
-									result.can_shoot_through_wall = true
-									result.can_shoot_through_shield = true
-								else
-									olog("Error: Unknown property " .. tostring(property))
-									if BREAK_ON_UNSUPPORTED_STAT then 
-										return
-									end
-								end
-							end
-						elseif key == "Can Toggle Firemode" then --bool
-							result[valid_keys[key]] = convert_boolean(val)
 						else
-							val = tonumber(val)
-							if val then 
-								if key == "Accuracy" or key == "Stability" then 
-									result.stats[valid_keys[key]] = convert_accstab(val)
-								elseif key == "Magazine" or key == "Ammo Stock" then
-									result[valid_keys[key]] = val
-								elseif key == "Concealment" then 
-									result.stats[valid_keys[key]] = val
-								elseif key == "Damage" then
-									if val > 200 then 
-										result.stats_modifiers = result.stats_modifiers or {}
-										result.stats_modifiers.damage = val / 200 
-										val = 200
-									end
-									result.stats[valid_keys[key]] = val
-								elseif key == "Threat" then 
-									result.stats[valid_keys[key]] = convert_threat(val)
-								elseif key == "Fire Rate" then 
-									result.fire_mode_data.fire_rate = convert_rof(val)
-								elseif key == "Pickup (low)" then 
-									result.AMMO_PICKUP[1] = val
-								elseif key == "Pickup (high)" then 
-									result.AMMO_PICKUP[2] = val
-								else 
-									if BREAK_ON_UNSUPPORTED_STAT then 
-										olog("Error! Unsupported stat: \"" .. tostring(key) .. "\" in \"" .. line .. "\"")
-										return
-									end
-									table.insert(found_unstable_fields,key)
-								end
-							else
-								olog("Error! Unable to parse stat value \"" .. tostring(split[2]) .. "\" in \"" .. line .. "\"!")
-								if BREAK_ON_ERROR then 
-									return
-								end
+							olog("Error! Invalid field name \"" .. tostring(key) .. "\" in \"" .. line .. "\"!")
+							if BREAK_ON_ERROR then 
+								return
 							end
-						end
-					else
-						olog("Error! Invalid field name \"" .. tostring(key) .. "\" in \"" .. line .. "\"!")
-						if BREAK_ON_ERROR then 
-							return
 						end
 					end
 				end
 			end
 		end
 	end
-	
 	for weapon_id,all_results_data in pairs(all_results) do 
 		local found_unstable_fields = all_results_data.found_unstable_fields
 		local result = all_results_data.result
 		
 		if WRITE_WEAPON_NAME_COMMENT then 
-			local weapon_name_localized = weapon_id
-			if tweak_data.weapon[weapon_id] then 
-				weapon_name_localized = get_weapon_name(weapon_id)
-			end
+			local weapon_name_localized = get_weapon_name(weapon_id)
 			output(string.rep("\t",2 + TAB_OFFSETS) .. "--" .. weapon_name_localized .. "--")
 		end
 		
@@ -621,37 +789,51 @@ if input_file then
 			end
 			local datatype = type(data)
 			if datatype ~= "table" then 
-				if datatype == "string" then 
+				if datatype == "string" and data ~= "nil" then
 					output(string.rep("\t",TAB_OFFSETS) .. weapon_prefix .. " = \"" .. data .. "\"")
 				else
 					output(string.rep("\t",TAB_OFFSETS) .. weapon_prefix .. " = " .. tostring(data))
 				end
-			elseif not table.empty(data) then 
-				output(string.rep("\t",TAB_OFFSETS) .. weapon_prefix .. " = {")
-				local tbl_len = sort_tbl(data)
-				local i = 0
-				local ordered = true
-				for _key,_data in pairs(data) do 
-					i = i + 1
-					local prefix 
-					if ordered and (i ~= _key) then 
-						ordered = false
-					end
-					if (type(_key) == "number") then 
-						if not (ordered and ALLOW_IMPLIED_NUMBER_INDICES) then 
-							prefix = "[" .. _key .. "]" .. " = "
+			else
+				local is_empty = table.empty(data)
+				
+			
+				if WRITE_INDIVIDUAL_TABLE_ENTRIES and not is_empty then
+					for m,n in pairs(data) do 
+						if type(n) ~= "table" then 
+							output(string.rep("\t",TAB_OFFSETS) .. weapon_prefix .. "." .. tostring(m) .. " = " .. tostring(n))
+						else
+							olog("WARNING: Subtables are not fully supported in WRITE_INDIVIDUAL_TABLE_ENTRIES")
+							OutputTable(data,TAB_OFFSETS + 1,prefix)
 						end
-					else
-						ordered = false
-						prefix = _key .. " = " 
 					end
-					if i >= #tbl_len then 
-						OutputTable(_data,TAB_OFFSETS + 1,prefix,true)
-					else
-						OutputTable(_data,TAB_OFFSETS + 1,prefix)
+				elseif not is_empty or INCLUDE_EMPTY_TABLES then 
+					output(string.rep("\t",TAB_OFFSETS) .. weapon_prefix .. " = {")
+					local tbl_len = sort_tbl(data)
+					local i = 0
+					local ordered = true
+					for _key,_data in pairs(data) do 
+						i = i + 1
+						local prefix 
+						if ordered and (i ~= _key) then 
+							ordered = false
+						end
+						if (type(_key) == "number") then 
+							if not (ordered and ALLOW_IMPLIED_NUMBER_INDICES) then 
+								prefix = "[" .. _key .. "]" .. " = "
+							end
+						else
+							ordered = false
+							prefix = _key .. " = " 
+						end
+						if i >= #tbl_len then 
+							OutputTable(_data,TAB_OFFSETS + 1,prefix,true)
+						else
+							OutputTable(_data,TAB_OFFSETS + 1,prefix)
+						end
 					end
+					output(string.rep("\t",TAB_OFFSETS) .. "}")
 				end
-				output(string.rep("\t",TAB_OFFSETS) .. "}")
 			end
 		end
 		
@@ -661,8 +843,6 @@ if input_file then
 				output(string.gsub(s,"WEAPONPREFIX",td_prefix .. tostring(weapon_id)))
 			end
 		end
-		
-		
 		if #found_unstable_fields > 0 then 
 			olog("Caution- potentially unsupported fields found! Please double-check in your output that the following values are valid:")
 			for _,field in pairs(found_unstable_fields) do 
@@ -695,3 +875,36 @@ if not table.empty(queued_write) then
 else
 	olog("No weapon data found to convert! :( i'm so hungry please feed me weapon data uwu")
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
