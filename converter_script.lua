@@ -1,4 +1,4 @@
---(Un)Official Crackdown Weapon Converter Tool v2.0
+--(Un)Official Crackdown Weapon Converter Tool v2.1
 --	For help/reporting bugs/etc, contact me on Discord.
 
 --todo: 
@@ -18,7 +18,7 @@
 --	the localization manager function and the weapontweakdata to get the localized weapon names, and the methods table.deep_map_copy(), table.empty(), and string.split, which are not part of the standard Lua library.
 --	If you're so inclined, you can define that and redirect the output log/file paths.
 
---	Also, this doesn't try to read the notes in the doc or add the throwables/melees/weapon attachments. You may need a to do those by hand or use a separate tool.
+--	Also, this doesn't try to read the notes in the doc or add the throwables/weapon attachments. You may need a to do those by hand or use a separate tool.
 --	This tool is not for attachments and also does not know how to interpret the English language, though that would be pretty handy.
 
 --	P.S. Since it writes to disk and operates on a keybind, I recommend binding it to something you won't accidentally press during gameplay, 
@@ -633,8 +633,8 @@ if input_file then
 							result.stats.knockback_tier = val --used in cd only
 --							result.stats.min_damage_effect = val / 10
 --							result.stats.max_damage_effect = val / 10
-						elseif key == "Range" then 
-							result.stats.range = val
+						elseif key == "Range" then  --range on the docs is in meters, but internally it is centimeters
+							result.stats.range = val * 100
 						elseif key == "Concealment" then 
 							result.stats.concealment = val
 							
