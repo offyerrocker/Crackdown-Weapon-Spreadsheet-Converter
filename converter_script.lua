@@ -152,7 +152,7 @@ local gun_data_template = {
 --(I recommend doing that BEFORE you start processing weapons.)
 		spread_moving = 1,
 		value = 1, --cost?
-		extra_ammo = 51, --don't worry about this
+		extra_ammo = 101, --don't worry about this
 		total_ammo_mod = 21, --or this
 		alert_size = 7,
 		zoom = 1,
