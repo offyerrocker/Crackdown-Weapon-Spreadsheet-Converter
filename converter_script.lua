@@ -574,8 +574,45 @@ local function convert_accstab(stat) --converts acc/stab from a [0-100] value to
 	return math.round((stat + 4) / 4)
 end
 
-local function convert_threat(input)
-	return math.round(input / 2)
+local function convert_threat(target_threat)
+	local THREAT_ROUND_UP = true
+	local threat_suppression_reverse_lookup = {
+		--suppression : threat
+		43, -- 1 (cap)
+		37, -- 2
+		34, -- 3
+		31, -- 4
+		28, -- 5
+		26, -- 6
+		24, -- 7
+		22, -- 8
+		20, -- 9
+		14, -- 10
+		13, -- 11
+		12, -- 12
+		11, -- 13
+		10, -- 14
+		9,  -- 15
+		8,  -- 16
+		6,  -- 17
+		4,  -- 18
+		2,  -- 19
+		0   -- 20 (floor)
+	}
+	
+	for threat_index,suppression in ipairs(threat_suppression_reverse_lookup) do 
+		if suppression == target_threat then 
+			return threat_index
+		elseif suppression < target_threat then
+			if THREAT_ROUND_UP then 
+				return math.max(1,threat_index - 1)
+			else --round down
+				return threat_index
+			end
+		end
+	end
+	
+	return 0
 end
 
 local function convert_boolean(input)
