@@ -29,7 +29,10 @@ local ADD_COMMAS = false
 --or if you just want to change the destination path
 local mod_path = "mods/Crackdown-Weapon-Spreadsheet-Converter/"
 
---where the data to be read is located and what is called
+
+local input_directory = mod_path .. "input/"
+
+--where the data to be read is located and what is called (legacy gdoc only)
 local input_filepath = mod_path .. "INPUT.txt"
 
 --where the processed data to be saved is called
@@ -342,7 +345,7 @@ end
 --and returns the table
 
 --this does not attempt to fill in missing values; that will be done later
-local function read_input()
+local function read_gdoc()
 	local all_results = {}
 	local input_file = io.open(input_filepath,"r")
 	if not input_file then 
@@ -503,6 +506,133 @@ local function read_input()
 end
 
 
+local function read_csv()
+	local all_results = {}
+	for k,v in pairs(_G.FileIO:GetFiles(input_directory)) do 
+		local input_file = io.open(input_filepath,"r")
+		if not input_file then 
+			olog("No input file found at path " .. tostring(input_filepath))
+		else
+			local result = {
+				weapon_id = nil,
+				weapon_data = {
+					stats = {}
+				}
+			}
+			local fields = {
+				"weapon_id",
+				"weapon_name",
+				"magazine",
+				"max_ammo",
+				"rof",
+				"damage",
+				"spread",
+				"stability",
+				"concealment",
+				"threat",
+				"reload_not_empty", --written as "reload partial" in the doc
+				"reload_empty", --written as "reload full" in the doc
+				"equip",
+				"pickup_low",
+				"pickup_high"
+			}
+			
+			local line_num = 0
+			for raw_line in input_file:lines() do 
+				line_num = line_num + 1
+				local split = string.split(raw_line,",")
+				local weapon_id = split[1]
+				if weapon_id and weapon_id ~= "" then
+					result.weapon_id = weapon_id
+					
+					local informal_name = split[2]
+					
+					local _mag = split[3]
+					local mag = tonumber(_mag)
+					result.weapon_data.stats.CLIP_AMMO_MAX = mag
+					
+					local _max_ammo = split[4]
+					local max_ammo = tonumber(_max_ammo)
+					result.weapon_data.stats.AMMO_MAX = max_ammo
+					
+					local _rof = split[5]
+					local rof = tonumber(_rof)
+					result.weapon_data.fire_mode_data = result.weapon_data.fire_mode_data or {}
+					result.weapon_data.fire_mode_data.fire_rate = convert_rof(rof)
+					
+					local _damage = split[6]
+					local damage = tonumber(_damage)
+					if damage > 200 then 
+						result.weapon_data.stats_modifiers = result.weapon_data.stats_modifiers or {}
+						result.weapon_data.stats_modifiers.damage = field_value / 200
+						damage = 200
+					end
+					result.weapon_data.stats.damage = damage
+					
+					local _spread = split[7]
+					local spread = tonumber(_spread)
+					result.weapon_data.stats.spread = convert_accstab(spread)
+					
+					local _stability = split[8]
+					local stability = tonumber(_stability)
+					result.weapon_data.stats.stability = convert_accstab(_stability)
+					
+					local _concealment = split[9]
+					local concealment = tonumber(_concealment)
+					result.weapon_data.stats.concealment = concealment
+					
+					local _threat = split[10]
+					local threat = tonumber(_threat)
+					result.weapon_data.stats.suppression = convert_threat(threat)
+					
+					
+					local _reload_not_empty = split[11]
+					local reload_not_empty = tonumber(_reload_not_empty)
+					local _reload_empty = split[12]
+					local reload_empty = tonumber(_reload_empty)
+					if reload_not_empty or reload_empty then 
+						result.weapon_data.timers = result.weapon_data.timers or {}
+						result.weapon_data.timers.reload_empty = reload_empty
+						result.weapon_data.timers.reload_not_empty = reload_not_empty
+					end
+					
+					local _equip = split[13]
+					local equip = tonumber(_equip)
+--					local _unequip = split[13]
+--					local unequip = tonumber(_unequip)
+					if equip then --or unequip then
+						result.weapon_data.timers = result.weapon_data.timers or {}
+						result.weapon_data.timers.equip = equip
+						--result.weapon_data.timers.unequip = unequip
+					end
+					
+					local _pickup_low = split[13]
+					local pickup_low = tonumber(_pickup_low)
+					local _pickup_high = split[14]
+					local pickup_high = tonumber(_pickup_high)
+					if pickup_low and pickup_high then 
+						result.weapon_data.AMMO_PICKUP = {
+							pickup_low,
+							pickup_high
+						}
+					end
+				else
+					olog("No weapon id found for line " .. line_num)
+				end
+				
+				
+			end
+			
+			if not invalid then 
+				table.insert(all_results,#all_results+1,result)
+			end
+			
+		end
+
+	end
+	return all_results
+end
+
 --given a table of weapon stats, pick and sort them into the correct location
 --then returns a printable output table
 local function sort_write_data (data,weapon_id)
@@ -616,7 +746,7 @@ local function sort_write_data (data,weapon_id)
 	return output
 end
 
-local parsed_data = read_input()
+local parsed_data = read_gdoc()
 
 if parsed_data then 
 	local output_file = io.open(output_filepath,"w+")
@@ -642,7 +772,6 @@ if parsed_data then
 	end
 	
 end
-
 
 
 --[[
@@ -683,3 +812,6 @@ sorting order:
 		
 
 --]]
+
+
+
