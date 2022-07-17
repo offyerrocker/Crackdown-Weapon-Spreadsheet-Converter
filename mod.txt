@@ -6,6 +6,12 @@
 	"version" : "1.1",
 	"blt_version" : 2,
 	"color" : "255 0 0",
+	"hooks" : [
+		{
+			"script_path" : "csv_inhouse.lua",
+			"hook_id" : "lib/managers/menumanager"
+		}
+	],
 	"keybinds" : [
 		{
 			"keybind_id" : "hi_kith_offy_waz_heer",
